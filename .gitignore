@@ -1,0 +1,20 @@
+# System files
+.DS_Store
+
+# Dependencies and temporary files for Rails
+**/node_modules/
+**/log/*.log
+**/tmp/
+**/.bundle/
+**/public/assets/
+**/public/packs/
+**/storage/*
+!**/storage/.keep
+
+# Database config and master key
+**/config/database.yml
+**/config/master.key
+
+# Ruby/rbenv files
+.ruby-version
+.ruby-gemset
