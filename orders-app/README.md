@@ -22,8 +22,8 @@ event to RabbitMQ.
 - `RABBITMQ_URL` (RabbitMQ connection string)
 
 Example:
-- `DATABASE_URL=postgres://postgres:postgres@order_db:5432/orders_db`
-- `CUSTOMER_SERVICE_URL=http://customer_service:3001`
+- `DATABASE_URL=postgres://postgres:postgres@order-db:5432/orders_db`
+- `CUSTOMER_SERVICE_URL=http://customer-service:3001`
 - `RABBITMQ_URL=amqp://app:app_password@rabbitmq:5672`
 
 ## Run locally (Docker recommended)
@@ -31,15 +31,30 @@ From the monorepo root:
 - Start everything:
   - `docker compose up --build`
 - Or only this service:
-  - `docker compose up --build order_service order_db rabbitmq customer_service`
+  - `docker compose up --build order-service order-db rabbitmq customer-service`
 
 ## Database setup
 If running manually inside the container:
-- `docker compose exec order_service rails db:prepare`
+- `docker compose exec order-service rails db:prepare`
 
 ## Tests
-- `docker compose exec order_service bundle exec rspec`
+- `docker compose exec order-service bundle exec rspec`
 
 ## Notes
 - On `POST /orders`, this service calls Customers Service over HTTP before saving
   and publishing the event.
+
+## Operations
+- Apply new migrations:
+  - `docker compose exec order-service bin/rails db:migrate`
+- Re-run seeds:
+  - `docker compose exec order-service bin/rails db:seed`
+- Reset database:
+  - `docker compose down -v --remove-orphans`
+  - `docker compose up -d --build`
+
+### Useful commands
+- Logs:
+  - `docker compose logs -f order-service`
+- Tests:
+  - `docker compose exec order-service bundle exec rspec`
