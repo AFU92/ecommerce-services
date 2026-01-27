@@ -1,0 +1,111 @@
+services:
+  order-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ORDER_DB}
+    ports:
+      - "${ORDER_DB_PORT}:5432"
+    volumes:
+      - order_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${ORDER_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  customer-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CUSTOMER_DB}
+    ports:
+      - "${CUSTOMER_DB_PORT}:5432"
+    volumes:
+      - customer_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${CUSTOMER_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_HTTP_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  customer-service:
+    build:
+      context: ./customers-app
+    command: >
+      bash -lc "rm -f tmp/pids/server.pid &&
+      bundle exec rails db:prepare &&
+      bundle exec rails db:seed &&
+      bundle exec rails s -b 0.0.0.0 -p 3001"
+    environment:
+      RAILS_ENV: ${RAILS_ENV}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+      RAILS_LOG_TO_STDOUT: "${RAILS_LOG_TO_STDOUT}"
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "${CUSTOMERS_PORT}:3001"
+
+  customer-consumer:
+    build:
+      context: ./customers-app
+    command: >
+      bash -lc "bundle exec rails runner 'puts :booted' &&
+      bundle exec ruby bin/consumer"
+    environment:
+      RAILS_ENV: ${RAILS_ENV}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+      RAILS_LOG_TO_STDOUT: "${RAILS_LOG_TO_STDOUT}"
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: ./orders-app
+    command: >
+      bash -lc "rm -f tmp/pids/server.pid &&
+      bundle exec rails db:prepare &&
+      bundle exec rails s -b 0.0.0.0 -p 3000"
+    environment:
+      RAILS_ENV: ${RAILS_ENV}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@order-db:5432/${ORDER_DB}
+      CUSTOMER_SERVICE_URL: ${CUSTOMER_SERVICE_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+      RAILS_LOG_TO_STDOUT: "${RAILS_LOG_TO_STDOUT}"
+    depends_on:
+      order-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      customer-service:
+        condition: service_started
+    ports:
+      - "${ORDERS_PORT}:3000"
+
+volumes:
+  order_postgres_data:
+  customer_postgres_data:
