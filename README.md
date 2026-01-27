@@ -18,8 +18,8 @@ Monorepo with two Ruby on Rails API microservices: Orders and Customers, using P
 
 ## Run with Docker
 - Infra only (DBs + RabbitMQ):
-  - `docker compose up -d order_db customer_db rabbitmq`
+  - `docker compose up -d order-db customer-db rabbitmq`
 - Start services:
-  - `docker compose up --build customer_service order_service`
+  - `docker compose up --build customer-service order-service`
 - Full stack:
   - `docker compose up --build`
