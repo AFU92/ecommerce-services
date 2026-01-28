@@ -128,8 +128,9 @@ Notes:
 - Report: after running with coverage, open `coverage/index.html` in a browser.
 - Enable coverage run:
   - `COVERAGE=true bundle exec rspec`
- - Threshold: CI enforces 90% minimum coverage.
-   Local runs with `COVERAGE=true` also enforce 90%.
+- Threshold: CI enforces 85% minimum coverage.
+  Local runs with `COVERAGE=true` also enforce 85%.
+- Scope: coverage tracks only controllers and models.
 
 ## Code Style
 

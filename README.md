@@ -42,7 +42,7 @@ Monorepo with two Ruby on Rails API microservices: Orders and Customers, using P
 - Unit tests: `.github/workflows/unit-tests.yml`
   - Runs on pull requests and pushes to `main`.
   - Matrix per app: `orders-app` and `customers-app` (two checks).
-  - Enforces coverage >= 90% with SimpleCov (CI or `COVERAGE=true`).
+  - Enforces coverage >= 85% with SimpleCov (CI or `COVERAGE=true`).
   - Uses PostgreSQL service; external calls are stubbed in specs.
 - Linting: `.github/workflows/rubocop.yml`
   - Separate job per app: `orders-app` and `customers-app` (two checks).
@@ -129,8 +129,9 @@ Notes:
 - Report: after running with coverage, open `coverage/index.html` in a browser.
 - Enable coverage run:
   - `COVERAGE=true bundle exec rspec`
- - Threshold: CI enforces 90% minimum coverage.
-   Local runs with `COVERAGE=true` also enforce 90%.
+- Threshold: CI enforces 85% minimum coverage.
+  Local runs with `COVERAGE=true` also enforce 85%.
+- Scope: coverage tracks only controllers and models.
 
 ## Code Style
 
