@@ -5,21 +5,17 @@ require "json"
 require "bunny"
 require_relative "../config/environment"
 
-EXCHANGE = "orders.events"
-ROUTING_KEY = "orders.created"
-QUEUE = "customer.orders.created"
-
 conn = Bunny.new(ENV.fetch("RABBITMQ_URL"))
 conn.start
 
 ch = conn.create_channel
 ch.prefetch(10)
 
-exchange = ch.direct(EXCHANGE, durable: true)
-queue = ch.queue(QUEUE, durable: true)
-queue.bind(exchange, routing_key: ROUTING_KEY)
+exchange = ch.direct(Constants::ORDERS_EXCHANGE, durable: true)
+queue = ch.queue(Constants::CUSTOMER_ORDERS_QUEUE, durable: true)
+queue.bind(exchange, routing_key: Constants::ORDERS_CREATED_KEY)
 
-puts "[customer-consumer] listening on #{QUEUE} (#{ROUTING_KEY})"
+puts "[customer-consumer] listening on #{Constants::CUSTOMER_ORDERS_QUEUE} (#{Constants::ORDERS_CREATED_KEY})"
 
 queue.subscribe(manual_ack: true, block: true) do |delivery_info, _properties, body|
   payload = JSON.parse(body)

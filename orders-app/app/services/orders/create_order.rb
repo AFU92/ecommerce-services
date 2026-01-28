@@ -27,10 +27,9 @@ module Orders
     private
 
     def ensure_customer_exists!(customer_id)
-      raise ArgumentError, "customer_id is required" if customer_id.blank?
+      raise ArgumentError, ::Constants::CUSTOMER_ID_REQUIRED_MSG if customer_id.blank?
 
       CustomerServiceClient.new.ensure_exists!(customer_id)
     end
   end
 end
-

@@ -1,6 +1,6 @@
 class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound do
-    render_jsonapi_error(status: :not_found, title: "Not Found", detail: "Record not found")
+    render_jsonapi_error(status: :not_found, title: Constants::NOT_FOUND, detail: Constants::RECORD_NOT_FOUND_MSG)
   end
 
   private

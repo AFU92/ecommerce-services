@@ -6,8 +6,8 @@ require 'json'
 class OrderCreatedPublisher
   class PublishError < StandardError; end
 
-  EXCHANGE = 'orders.events'
-  ROUTING_KEY = 'orders.created'
+  EXCHANGE = AppConstants::EXCHANGE_ORDERS_EVENTS
+  ROUTING_KEY = AppConstants::ROUTING_KEY_ORDERS_CREATED
 
   def initialize(order)
     @order = order
