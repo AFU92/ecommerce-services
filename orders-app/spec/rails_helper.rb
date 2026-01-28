@@ -76,4 +76,9 @@ RSpec.configure do |config|
 
   # FactoryBot methods (create, build, etc.)
   config.include FactoryBot::Syntax::Methods
+
+  # Treat specs under spec/controllers as request specs
+  config.define_derived_metadata(file_path: %r{spec/controllers}) do |metadata|
+    metadata[:type] ||= :request
+  end
 end
