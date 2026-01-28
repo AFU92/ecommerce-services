@@ -71,4 +71,9 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  # Treat specs under spec/controllers as request specs
+  config.define_derived_metadata(file_path: %r{spec/controllers}) do |metadata|
+    metadata[:type] ||= :request
+  end
 end
