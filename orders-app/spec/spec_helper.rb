@@ -1,7 +1,8 @@
-if ENV["COVERAGE"]
+if ENV["COVERAGE"] || ENV["CI"]
   require "simplecov"
   SimpleCov.start "rails" do
     add_filter "/spec/"
+    minimum_coverage 90
   end
 end
 
