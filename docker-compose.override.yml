@@ -1,0 +1,17 @@
+services:
+  order-db:
+    ports:
+      - "${ORDER_DB_PORT}:5432"
+
+  customer-db:
+    ports:
+      - "${CUSTOMER_DB_PORT}:5432"
+
+  customer-service:
+    ports:
+      - "${CUSTOMERS_PORT}:3001"
+
+  order-service:
+    ports:
+      - "${ORDERS_PORT}:3000"
+

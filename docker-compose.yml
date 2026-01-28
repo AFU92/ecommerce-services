@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${ORDER_DB}
-    ports:
-      - "${ORDER_DB_PORT}:5432"
     volumes:
       - order_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,8 +19,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${CUSTOMER_DB}
-    ports:
-      - "${CUSTOMER_DB_PORT}:5432"
     volumes:
       - customer_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -49,10 +45,10 @@ services:
     build:
       context: ./customers-app
     command: >
-      bash -lc "rm -f tmp/pids/server.pid &&
-      bundle exec rails db:prepare &&
-      bundle exec rails db:seed &&
-      bundle exec rails s -b 0.0.0.0 -p 3001"
+      bash -c "rm -f tmp/pids/server.pid && \
+               bin/rails db:prepare && \
+               bin/rails db:seed && \
+               bundle exec rails s -b '0.0.0.0' -p 3001"
     environment:
       RAILS_ENV: ${RAILS_ENV}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
@@ -63,8 +59,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "${CUSTOMERS_PORT}:3001"
+    # ports moved to docker-compose.override.yml
 
   customer-consumer:
     build:
@@ -103,8 +98,7 @@ services:
         condition: service_healthy
       customer-service:
         condition: service_started
-    ports:
-      - "${ORDERS_PORT}:3000"
+    # ports moved to docker-compose.override.yml
 
 volumes:
   order_postgres_data:

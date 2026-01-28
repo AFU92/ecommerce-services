@@ -1,0 +1,49 @@
+services:
+  customer-service:
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -rnet/http -e 'resp=Net::HTTP.get_response(URI(\"http://localhost:3001/up\")); exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)' "]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  order-service:
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@order-db:5432/${ORDER_DB}
+      CUSTOMER_SERVICE_URL: ${CUSTOMER_SERVICE_URL}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -rnet/http -e 'resp=Net::HTTP.get_response(URI(\"http://localhost:3000/up\")); exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)' "]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  e2e:
+    image: ruby:3.2-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      ORDERS_BASE: http://order-service:3000
+      CUSTOMERS_BASE: http://customer-service:3001
+    depends_on:
+      order-service:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      customer-consumer:
+        condition: service_started
+    command: ["ruby", "scripts/e2e.rb"]
+
+  customer-consumer:
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
