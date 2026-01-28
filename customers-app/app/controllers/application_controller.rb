@@ -1,3 +1,6 @@
+# Ensure constants are available in all environments (CI/test may not eager load)
+require Rails.root.join('app/constants') unless defined?(::Constants)
+
 class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound do
     Rails.logger.warn(message: ::Constants::LOG_NOT_FOUND, path: request.path)
