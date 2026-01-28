@@ -46,17 +46,11 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          CABLE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          CACHE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          QUEUE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
         run: bundle exec rails db:prepare
 
       - name: Run RSpec
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          CABLE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          CACHE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
-          QUEUE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
         run: bundle exec rspec --format progress
