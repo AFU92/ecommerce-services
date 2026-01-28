@@ -1,0 +1,37 @@
+name: e2e
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare .env
+        run: |
+          cp .env.example .env
+          sed -i 's/^RAILS_ENV=.*/RAILS_ENV=development/' .env
+
+      - name: Docker Compose up
+        run: |
+          docker compose up -d --build
+
+      - name: Run E2E
+        run: |
+          docker compose run --rm e2e
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=200 customer-service order-service customer-consumer rabbitmq
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v --remove-orphans

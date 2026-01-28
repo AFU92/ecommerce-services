@@ -49,10 +49,10 @@ services:
     build:
       context: ./customers-app
     command: >
-      bash -lc "rm -f tmp/pids/server.pid &&
-      bundle exec rails db:prepare &&
-      bundle exec rails db:seed &&
-      bundle exec rails s -b 0.0.0.0 -p 3001"
+      bash -c "rm -f tmp/pids/server.pid && \
+               bin/rails db:prepare && \
+               bin/rails db:seed && \
+               bundle exec rails s -b '0.0.0.0' -p 3001"
     environment:
       RAILS_ENV: ${RAILS_ENV}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@customer-db:5432/${CUSTOMER_DB}
@@ -65,6 +65,11 @@ services:
         condition: service_healthy
     ports:
       - "${CUSTOMERS_PORT}:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -rnet/http -e 'resp=Net::HTTP.get_response(URI(\"http://localhost:3001/up\")); exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)' "]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
   customer-consumer:
     build:
@@ -105,6 +110,28 @@ services:
         condition: service_started
     ports:
       - "${ORDERS_PORT}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -rnet/http -e 'resp=Net::HTTP.get_response(URI(\"http://localhost:3000/up\")); exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)' "]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  e2e:
+    image: ruby:3.2-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      ORDERS_BASE: http://order-service:3000
+      CUSTOMERS_BASE: http://customer-service:3001
+    depends_on:
+      order-service:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      customer-consumer:
+        condition: service_started
+    command: ["ruby", "scripts/e2e.rb"]
 
 volumes:
   order_postgres_data:
