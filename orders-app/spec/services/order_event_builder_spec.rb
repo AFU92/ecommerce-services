@@ -19,4 +19,3 @@ RSpec.describe OrderEventBuilder do
     end
   end
 end
-

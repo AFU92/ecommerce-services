@@ -13,4 +13,3 @@ RSpec.configure do |config|
     DatabaseCleaner.cleaning { example.run }
   end
 end
-

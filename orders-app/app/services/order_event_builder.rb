@@ -23,4 +23,3 @@ class OrderEventBuilder
     }
   end
 end
-

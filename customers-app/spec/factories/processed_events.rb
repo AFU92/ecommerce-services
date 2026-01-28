@@ -6,4 +6,3 @@ FactoryBot.define do
     processed_at { Time.current }
   end
 end
-

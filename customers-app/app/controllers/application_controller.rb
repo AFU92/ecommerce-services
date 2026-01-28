@@ -1,5 +1,5 @@
 # Ensure constants are available in all environments (CI/test may not eager load)
-require Rails.root.join('app/constants') unless defined?(::Constants)
+require Rails.root.join("app/constants") unless defined?(::Constants)
 
 # Base API controller with JSON:API error helper.
 # Translates exceptions into structured errors.
@@ -23,6 +23,6 @@ class ApplicationController < ActionController::API
     # Fallbacks for Rack 3 deprecations (e.g., :unprocessable_entity)
     code ||= Rack::Utils::SYMBOL_TO_STATUS_CODE[:unprocessable_content] if status == :unprocessable_entity
     code = code.to_i
-    render json: { errors: [{ status: code.to_s, title: title, detail: detail }] }, status: status
+    render json: { errors: [ { status: code.to_s, title: title, detail: detail } ] }, status: status
   end
 end

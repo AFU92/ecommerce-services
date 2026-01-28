@@ -24,4 +24,3 @@ RSpec.describe Customers::OrderEventBuilder do
     end
   end
 end
-
