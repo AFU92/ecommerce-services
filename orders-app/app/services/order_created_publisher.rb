@@ -23,24 +23,13 @@ class OrderCreatedPublisher
   # @return [true] when publish succeeds.
   # @raise [OrderCreatedPublisher::PublishError] when any error occurs.
   def publish!
-    event_id = SecureRandom.uuid
+    payload = OrderEventBuilder.build(@order)
+    event_id = payload[:event_id]
     conn = Bunny.new(ENV.fetch("RABBITMQ_URL"))
     conn.start
     ch = conn.create_channel
     exchange = ch.direct(EXCHANGE, durable: true)
 
-    payload = {
-      event_id: event_id,
-      order: {
-        id: @order.id,
-        customer_id: @order.customer_id,
-        product_name: @order.product_name,
-        quantity: @order.quantity,
-        price: @order.price.to_s,
-        status: @order.status,
-        created_at: @order.created_at&.iso8601
-      }
-    }
     Rails.logger.info(message: Constants::LOG_PUB_START, event_id: event_id, order_id: @order.id, customer_id: @order.customer_id)
     exchange.publish(payload.to_json, routing_key: ROUTING_KEY, content_type: "application/json", persistent: true)
     Rails.logger.info(message: Constants::LOG_PUB_OK, event_id: event_id, order_id: @order.id)

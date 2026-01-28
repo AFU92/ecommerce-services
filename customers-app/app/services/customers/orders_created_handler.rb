@@ -13,8 +13,9 @@ module Customers
     # @return [void]
     # @raise [KeyError] when event_id is missing.
     def self.call(payload)
-      event_id = payload.fetch("event_id")
-      customer_id = payload.dig("order", "customer_id") || payload["customer_id"]
+      built = Customers::OrderEventBuilder.build(payload)
+      event_id = built[:event_id]
+      customer_id = built[:customer_id]
       if customer_id.nil?
         Rails.logger.warn(message: Constants::LOG_ORD_MISSING_CUST, event_id: event_id)
         return
