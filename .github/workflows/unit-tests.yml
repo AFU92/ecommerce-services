@@ -1,13 +1,30 @@
 name: unit-tests
 
 on:
-  push:
   pull_request:
+    paths:
+      - 'orders-app/**'
+      - 'customers-app/**'
+      - '.github/workflows/unit-tests.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'orders-app/**'
+      - 'customers-app/**'
+      - '.github/workflows/unit-tests.yml'
   workflow_dispatch:
+
+concurrency:
+  group: unit-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   unit:
+    name: unit (${{ matrix.app }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
     services:
       postgres:
         image: postgres:15-alpine
@@ -22,9 +39,6 @@ jobs:
     strategy:
       matrix:
         app: [orders-app, customers-app]
-    defaults:
-      run:
-        working-directory: ${{ matrix.app }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,4 +67,5 @@ jobs:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          COVERAGE: "true"
         run: bundle exec rspec --format progress

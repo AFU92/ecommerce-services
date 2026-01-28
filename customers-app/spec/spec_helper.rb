@@ -1,7 +1,16 @@
-if ENV["COVERAGE"]
+if ENV["COVERAGE"] || ENV["CI"]
   require "simplecov"
-  SimpleCov.start "rails" do
+  SimpleCov.start do
     add_filter "/spec/"
+    add_filter "/config/"
+    add_filter "/db/"
+    add_filter "/lib/"
+    add_filter "/app/serializers/"
+    add_filter "/app/services/"
+    add_filter "/app/jobs/"
+    add_filter "/app/mailers/"
+    track_files "{app/controllers,app/models}/**/*.rb"
+    minimum_coverage 85
   end
 end
 

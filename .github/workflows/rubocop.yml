@@ -1,0 +1,46 @@
+name: rubocop
+
+on:
+  pull_request:
+    paths:
+      - 'orders-app/**'
+      - 'customers-app/**'
+      - '.github/workflows/rubocop.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'orders-app/**'
+      - 'customers-app/**'
+      - '.github/workflows/rubocop.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: rubocop-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  rubocop:
+    name: rubocop (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [orders-app, customers-app]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.8'
+          bundler-cache: true
+
+      - name: Bundle install
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Run RuboCop
+        run: bundle exec rubocop --format progress --no-color
+
