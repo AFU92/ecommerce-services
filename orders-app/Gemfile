@@ -47,6 +47,19 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+  gem "factory_bot_rails"
+  gem "shoulda-matchers"
+  gem "faker"
+  gem "database_cleaner-active_record"
 end
 
 gem "rspec-rails", "~> 8.0", groups: [:development, :test]
+
+gem "jsonapi-serializer", "~> 2.2"
+
+group :test do
+  gem "webmock"
+end
+
+# RabbitMQ client for publishing events
+gem "bunny"

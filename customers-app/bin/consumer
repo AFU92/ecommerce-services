@@ -1,0 +1,30 @@
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "json"
+require "bunny"
+require_relative "../config/environment"
+
+conn = Bunny.new(ENV.fetch("RABBITMQ_URL"))
+conn.start
+
+ch = conn.create_channel
+ch.prefetch(10)
+
+exchange = ch.direct(Constants::ORDERS_EXCHANGE, durable: true)
+queue = ch.queue(Constants::CUSTOMER_ORDERS_QUEUE, durable: true)
+queue.bind(exchange, routing_key: Constants::ORDERS_CREATED_KEY)
+
+puts "[customer-consumer] listening on #{Constants::CUSTOMER_ORDERS_QUEUE} (#{Constants::ORDERS_CREATED_KEY})"
+
+queue.subscribe(manual_ack: true, block: true) do |delivery_info, _properties, body|
+  payload = JSON.parse(body)
+  Customers::OrdersCreatedHandler.call(payload)
+  ch.ack(delivery_info.delivery_tag)
+rescue JSON::ParserError => e
+  warn "[customer-consumer] invalid JSON: #{e.message}"
+  ch.ack(delivery_info.delivery_tag)
+rescue => e
+  warn "[customer-consumer] error: #{e.class} #{e.message}"
+  ch.nack(delivery_info.delivery_tag, false, true) # requeue
+end
