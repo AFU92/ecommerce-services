@@ -1,6 +1,8 @@
 # Ensure constants are available in all environments (CI/test may not eager load)
 require Rails.root.join('app/constants') unless defined?(::Constants)
 
+# Base API controller with JSON:API error helper.
+# Translates exceptions into structured errors.
 class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound do
     Rails.logger.warn(message: ::Constants::LOG_NOT_FOUND, path: request.path)
@@ -9,6 +11,13 @@ class ApplicationController < ActionController::API
 
   private
 
+  # Renders a JSON:API error object with given status.
+  # Includes status code, title, and detail.
+  #
+  # @param status [Symbol] HTTP status symbol.
+  # @param title [String] Short error title.
+  # @param detail [String] Human-readable error detail.
+  # @return [void]
   def render_jsonapi_error(status:, title:, detail:)
     code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status]
     # Fallbacks for Rack 3 deprecations (e.g., :unprocessable_entity)

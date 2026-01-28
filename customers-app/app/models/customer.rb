@@ -1,3 +1,5 @@
+# Customer represents a buyer record in customers service.
+# Validates name, address, and non-negative orders_count.
 class Customer < ApplicationRecord
   validates :customer_name, presence: true
   validates :address, presence: true

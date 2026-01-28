@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Serializes Customer records into JSON:API resource.
+# Exposes name, address, and orders_count.
 class CustomerSerializer
   include JSONAPI::Serializer
 

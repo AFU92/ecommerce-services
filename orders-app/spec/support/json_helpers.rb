@@ -31,4 +31,3 @@ end
 RSpec.configure do |config|
   config.include JsonHelpers, type: :request
 end
-

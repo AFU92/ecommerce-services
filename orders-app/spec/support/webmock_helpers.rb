@@ -25,4 +25,3 @@ end
 RSpec.configure do |config|
   config.include WebmockHelpers, type: :request
 end
-

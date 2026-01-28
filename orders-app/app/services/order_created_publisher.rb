@@ -1,40 +1,37 @@
 # frozen_string_literal: true
 
-require 'bunny'
-require 'json'
-require_relative '../constants'
+require "bunny"
+require "json"
+require_relative "../constants"
 
+# Publishes orders.created events to RabbitMQ.
+# Sends JSON payload with relevant order fields.
 class OrderCreatedPublisher
   class PublishError < StandardError; end
 
   EXCHANGE = Constants::ORDERS_EXCHANGE
   ROUTING_KEY = Constants::ORDERS_CREATED_KEY
 
+  # @param order [Order] Order to publish as event.
   def initialize(order)
     @order = order
   end
 
+  # Connects to RabbitMQ and publishes the event.
+  # Logs results and closes connections.
+  #
+  # @return [true] when publish succeeds.
+  # @raise [OrderCreatedPublisher::PublishError] when any error occurs.
   def publish!
-    event_id = SecureRandom.uuid
-    conn = Bunny.new(ENV.fetch('RABBITMQ_URL'))
+    payload = OrderEventBuilder.build(@order)
+    event_id = payload[:event_id]
+    conn = Bunny.new(ENV.fetch("RABBITMQ_URL"))
     conn.start
     ch = conn.create_channel
     exchange = ch.direct(EXCHANGE, durable: true)
 
-    payload = {
-      event_id: event_id,
-      order: {
-        id: @order.id,
-        customer_id: @order.customer_id,
-        product_name: @order.product_name,
-        quantity: @order.quantity,
-        price: @order.price.to_s,
-        status: @order.status,
-        created_at: @order.created_at&.iso8601
-      }
-    }
     Rails.logger.info(message: Constants::LOG_PUB_START, event_id: event_id, order_id: @order.id, customer_id: @order.customer_id)
-    exchange.publish(payload.to_json, routing_key: ROUTING_KEY, content_type: 'application/json', persistent: true)
+    exchange.publish(payload.to_json, routing_key: ROUTING_KEY, content_type: "application/json", persistent: true)
     Rails.logger.info(message: Constants::LOG_PUB_OK, event_id: event_id, order_id: @order.id)
     ch.close
     conn.close

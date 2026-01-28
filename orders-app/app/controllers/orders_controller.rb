@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+# Manages orders listing and creation endpoints.
+# Uses JSON:API response formatting and errors.
 class OrdersController < ApplicationController
+  # Lists orders for a customer.
+  # Returns 200 JSON:API or 400 without customer_id.
   def index
     customer_id = params[:customer_id]
     if customer_id.blank?
@@ -12,6 +16,13 @@ class OrdersController < ApplicationController
     render json: OrderSerializer.new(orders).serializable_hash
   end
 
+  # Creates an order after customer validation.
+  # Publishes event and returns 201 JSON:API.
+  #
+  # @raise [Orders::CreateOrder::CustomerNotFound] when customer is missing.
+  # @raise [CustomerServiceClient::Unavailable] when customer service fails.
+  # @raise [OrderCreatedPublisher::PublishError] when publishing fails.
+  # @raise [ActiveRecord::RecordInvalid] when validation fails.
   def create
     order = Orders::CreateOrder.new(params: order_params).call
     render json: OrderSerializer.new(order).serializable_hash, status: :created
@@ -31,6 +42,10 @@ class OrdersController < ApplicationController
 
   private
 
+  # Strong parameters for order payload.
+  # Supports nested :order or top-level keys.
+  #
+  # @return [Hash] Permitted attributes for creation.
   def order_params
     container = params[:order] || params
     container = ActionController::Parameters.new(container) unless container.respond_to?(:permit)
