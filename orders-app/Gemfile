@@ -60,3 +60,6 @@ gem "jsonapi-serializer", "~> 2.2"
 group :test do
   gem "webmock"
 end
+
+# RabbitMQ client for publishing events
+gem "bunny"
