@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound do
+    Rails.logger.warn(message: Constants::LOG_NOT_FOUND, path: request.path)
     render_jsonapi_error(status: :not_found, title: Constants::NOT_FOUND, detail: Constants::RECORD_NOT_FOUND_MSG)
   end
 

@@ -14,4 +14,10 @@ module Constants
   CUSTOMER_ID_REQUIRED_MSG = "customer_id is required".freeze
   CUSTOMER_NOT_FOUND_MSG = "Customer not found".freeze
   RECORD_NOT_FOUND_MSG = "Record not found".freeze
+
+  # Logger message keys
+  LOG_ORD_MISSING_CUST = "ord_missing_cust".freeze
+  LOG_ORD_PROCESSED = "ord_processed".freeze
+  LOG_ORD_ALREADY = "ord_already".freeze
+  LOG_NOT_FOUND = "not_found".freeze
 end

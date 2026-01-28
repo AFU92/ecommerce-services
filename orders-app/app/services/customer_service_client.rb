@@ -19,18 +19,20 @@ class CustomerServiceClient
     http.read_timeout = 5
     http.open_timeout = 2
 
-    res = http.request(req)
+    response = http.request(req)
 
-    case res.code.to_i
+    case response.code.to_i
     when 200
       true
     when 404
+      Rails.logger.warn(message: Constants::LOG_CUST_NOT_FOUND, customer_id: customer_id)
       raise Orders::CreateOrder::CustomerNotFound
     else
-      raise Unavailable, "Customers Service returned #{res.code}"
+      Rails.logger.error(message: Constants::LOG_CUST_SVC_BAD_STATUS, status: response.code, customer_id: customer_id)
+      raise Unavailable, "#{Constants::CUST_SVC_RETURNED} #{response.code}"
     end
   rescue SocketError, IOError, SystemCallError, Timeout::Error => e
+    Rails.logger.error(message: Constants::LOG_CUST_SVC_UNAVAILABLE, error: e.class.name, detail: e.message, customer_id: customer_id)
     raise Unavailable, e.message
   end
 end
-
