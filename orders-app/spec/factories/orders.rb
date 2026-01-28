@@ -2,10 +2,10 @@
 
 FactoryBot.define do
   factory :order do
-    customer_id { 1 }
-    product_name { "Keyboard" }
-    quantity { 1 }
-    price { 9.99 }
+    customer_id { Faker::Number.between(from: 1, to: 10_000) }
+    product_name { Faker::Commerce.product_name }
+    quantity { Faker::Number.between(from: 1, to: 5) }
+    price { Faker::Commerce.price(range: 1.0..500.0) }
     status { "created" }
   end
 end
