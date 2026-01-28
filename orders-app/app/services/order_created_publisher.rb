@@ -2,12 +2,13 @@
 
 require 'bunny'
 require 'json'
+require_relative '../constants'
 
 class OrderCreatedPublisher
   class PublishError < StandardError; end
 
-  EXCHANGE = AppConstants::EXCHANGE_ORDERS_EVENTS
-  ROUTING_KEY = AppConstants::ROUTING_KEY_ORDERS_CREATED
+  EXCHANGE = Constants::ORDERS_EXCHANGE
+  ROUTING_KEY = Constants::ORDERS_CREATED_KEY
 
   def initialize(order)
     @order = order

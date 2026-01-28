@@ -4,9 +4,28 @@ require "bundler/setup"
 require "json"
 require "bunny"
 require_relative "../config/environment"
+# Ensure Constants are loaded in production (Zeitwerk may not autoload files at app/ root)
+require_relative "../app/constants"
 
-conn = Bunny.new(ENV.fetch("RABBITMQ_URL"))
-conn.start
+# Robust connection with simple retries so we don't fail if RabbitMQ isn't
+# ready exactly at container boot time.
+def connect_bunny!(url)
+  attempts = 0
+  delays = [1, 2, 3, 5, 8]
+  begin
+    conn = Bunny.new(url)
+    conn.start
+    conn
+  rescue Bunny::TCPConnectionFailed, Bunny::TCPConnectionFailedForAllHosts, Bunny::HostListDepleted, Errno::ECONNREFUSED => e
+    delay = delays[attempts] || 10
+    warn "[customer-consumer] rabbitmq connect failed: #{e.class} #{e.message}. retrying in #{delay}s"
+    attempts += 1
+    sleep delay
+    retry
+  end
+end
+
+conn = connect_bunny!(ENV.fetch("RABBITMQ_URL"))
 
 ch = conn.create_channel
 ch.prefetch(10)

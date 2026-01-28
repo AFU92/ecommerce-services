@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   e2e:
@@ -13,25 +14,78 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare .env
+      - name: Set CI environment variables
         run: |
-          cp .env.example .env
-          sed -i 's/^RAILS_ENV=.*/RAILS_ENV=development/' .env
+          # Rails
+          echo "RAILS_ENV=production" >> $GITHUB_ENV
+          echo "RAILS_LOG_TO_STDOUT=true" >> $GITHUB_ENV
+          # Secrets
+          echo "SECRET_KEY_BASE=$(ruby -rsecurerandom -e 'puts SecureRandom.hex(64)')" >> $GITHUB_ENV
+          # Postgres
+          echo "POSTGRES_USER=user_admin" >> $GITHUB_ENV
+          echo "POSTGRES_PASSWORD=password_admin" >> $GITHUB_ENV
+          echo "ORDER_DB=order_service_development" >> $GITHUB_ENV
+          echo "CUSTOMER_DB=customer_service_development" >> $GITHUB_ENV
+          # RabbitMQ
+          echo "RABBITMQ_DEFAULT_USER=app" >> $GITHUB_ENV
+          echo "RABBITMQ_DEFAULT_PASS=app_password" >> $GITHUB_ENV
+          echo "RABBITMQ_AMQP_PORT=5672" >> $GITHUB_ENV
+          echo "RABBITMQ_HTTP_PORT=15672" >> $GITHUB_ENV
+          # Internal service URL (container network)
+          echo "CUSTOMER_SERVICE_URL=http://customer-service:3001" >> $GITHUB_ENV
 
-      - name: Docker Compose up
+      - name: Start core infra only (DBs + RabbitMQ)
         run: |
-          docker compose up -d --build
+          docker compose -f docker-compose.yml -f docker-compose.integration.yml up -d --build order-db customer-db rabbitmq
+
+      - name: Start app services (build + up)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.integration.yml up -d --build customer-service order-service customer-consumer
+
+      - name: Wait for app healthchecks to be ready
+        run: |
+          set -e
+          compose="docker compose -f docker-compose.yml -f docker-compose.integration.yml"
+          timeout=60
+          get_logs() {
+            echo "--- compose ps"; $compose ps || true
+            echo "--- customer-service logs"; $compose logs --tail=200 customer-service || true
+            echo "--- order-service logs"; $compose logs --tail=200 order-service || true
+            echo "--- customer-consumer logs"; $compose logs --tail=100 customer-consumer || true
+            echo "--- rabbitmq logs"; $compose logs --tail=50 rabbitmq || true
+          }
+          check() {
+            svc=$1; url=$2; i=0
+            echo "Waiting for $svc at $url"
+            until $compose exec -T $svc ruby -rnet/http -e "resp=Net::HTTP.get_response(URI(ARGV[0])); exit(resp.is_a?(Net::HTTPSuccess) ? 0 : 1)" "$url"; do
+              if ! $compose ps --status=running | grep -q "\b$svc\b"; then
+                echo "Service $svc is not running"
+                get_logs
+                exit 1
+              fi
+              i=$((i+1))
+              if [ $i -ge $timeout ]; then
+                echo "Timeout waiting for $svc"
+                get_logs
+                exit 1
+              fi
+              sleep 1
+            done
+            echo "$svc is up"
+          }
+          check customer-service http://localhost:3001/up
+          check order-service     http://localhost:3000/up
 
       - name: Run E2E
         run: |
-          docker compose run --rm e2e
+          docker compose -f docker-compose.yml -f docker-compose.integration.yml run --rm e2e
 
       - name: Show logs on failure
         if: failure()
         run: |
-          docker compose ps
-          docker compose logs --tail=200 customer-service order-service customer-consumer rabbitmq
+          docker compose -f docker-compose.yml -f docker-compose.integration.yml ps
+          docker compose -f docker-compose.yml -f docker-compose.integration.yml logs --tail=200 customer-service order-service customer-consumer rabbitmq
 
       - name: Teardown
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: docker compose -f docker-compose.yml -f docker-compose.integration.yml down -v --remove-orphans

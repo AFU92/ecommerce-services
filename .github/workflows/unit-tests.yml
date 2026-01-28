@@ -3,6 +3,7 @@ name: unit-tests
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   unit:
@@ -16,7 +17,7 @@ jobs:
           POSTGRES_DB: postgres
         ports: ['5432:5432']
         options: >-
-          --health-cmd="pg_isready -U postgres" \
+          --health-cmd="pg_isready -U postgres"
           --health-interval=5s --health-timeout=5s --health-retries=15
     strategy:
       matrix:
@@ -35,20 +36,27 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.4.8'
           bundler-cache: true
-        working-directory: ${{ matrix.app }}
+
+      - name: Bundle install
+        run: bundle install --jobs 4 --retry 3
 
       - name: Prepare DB
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          CABLE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          CACHE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          QUEUE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
         run: bundle exec rails db:prepare
 
       - name: Run RSpec
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          CABLE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          CACHE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
+          QUEUE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{ env.DB_NAME }}
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
         run: bundle exec rspec --format progress
-
