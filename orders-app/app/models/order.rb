@@ -1,3 +1,5 @@
+# Order represents a purchase placed by a customer.
+# Validates product, quantity, price, and status.
 class Order < ApplicationRecord
   validates :customer_id, presence: true
   validates :product_name, presence: true

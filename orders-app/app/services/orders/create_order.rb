@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Orders
+  # Creates an Order after checking customer exists.
+  # Emits an orders.created event after persistence.
   class CreateOrder
     class CustomerNotFound < StandardError; end
 
@@ -8,6 +10,14 @@ module Orders
       @params = params.symbolize_keys
     end
 
+    # Persists a new order and publishes an event.
+    # Validates customer via HTTP before persisting.
+    #
+    # @return [Order] The persisted order.
+    # @raise [Orders::CreateOrder::CustomerNotFound] when customer is missing.
+    # @raise [CustomerServiceClient::Unavailable] when customer service fails.
+    # @raise [OrderCreatedPublisher::PublishError] when publishing fails.
+    # @raise [ActiveRecord::RecordInvalid] when validation fails.
     def call
       ensure_customer_exists!(@params[:customer_id])
 
@@ -26,6 +36,10 @@ module Orders
 
     private
 
+    # Ensures customer exists using the Customers service.
+    #
+    # @param customer_id [Integer] Customer identifier.
+    # @raise [ArgumentError] when customer_id is blank.
     def ensure_customer_exists!(customer_id)
       raise ArgumentError, ::Constants::CUSTOMER_ID_REQUIRED_MSG if customer_id.blank?
 

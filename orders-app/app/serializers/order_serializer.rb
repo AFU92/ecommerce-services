@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Serializes Order into JSON:API resource.
+# Emits price as string and ISO created_at.
 class OrderSerializer
   include JSONAPI::Serializer
 

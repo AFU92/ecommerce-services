@@ -1,3 +1,4 @@
+# Model spec covering ProcessedEvent validations and uniqueness.
 require 'rails_helper'
 
 RSpec.describe ProcessedEvent, type: :model do

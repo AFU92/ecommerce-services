@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Request specs for listing and creating orders.
+# Stubs customer service and event publishing.
 require "rails_helper"
 
 RSpec.describe "Orders", type: :request do
@@ -50,4 +52,3 @@ RSpec.describe "Orders", type: :request do
     end
   end
 end
-

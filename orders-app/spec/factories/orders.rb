@@ -9,4 +9,3 @@ FactoryBot.define do
     status { "created" }
   end
 end
-

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Request specs cover the customer show endpoint.
+# Verifies JSON:API response and 404 handling.
 require "rails_helper"
 
 RSpec.describe "Customers", type: :request do

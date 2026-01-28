@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 module Customers
+  # Handles orders.created events to update customers.
+  # Ensures idempotency and increments orders_count.
   class OrdersCreatedHandler
+    # Processes event payload and updates counters.
+    # Persists ProcessedEvent and logs outcomes.
+    #
+    # @param payload [Hash] Event data from RabbitMQ.
+    # @return [void]
+    # @raise [KeyError] when event_id is missing.
     def self.call(payload)
       event_id = payload.fetch("event_id")
       customer_id = payload.dig("order", "customer_id") || payload["customer_id"]
@@ -19,4 +29,3 @@ module Customers
     end
   end
 end
-

@@ -1,3 +1,4 @@
+# Model spec covering Customer validations.
 require 'rails_helper'
 
 RSpec.describe Customer, type: :model do
